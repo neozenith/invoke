@@ -9,7 +9,7 @@ except ImportError:
     from six import raise_from, iteritems, string_types
 
 from .config import Config, DataProxy
-from .exceptions import Failure, AuthFailure, ResponseNotAccepted
+from .exceptions import Failure, AuthFailure, ResponseNotAccepted, CommandsNotRun
 from .runners import Result
 from .watchers import FailingResponder
 
@@ -474,16 +474,23 @@ class MockContext(Context):
             # objects (possibly repeating).
             singletons = tuple([Result, bool] + list(string_types))
             if isinstance(results, dict):
+                tracker = {}
                 for key, value in iteritems(results):
                     results[key] = self._normalize(value)
+                    tracker[key] = False
             elif isinstance(results, singletons) or hasattr(results, "__iter__"):
                 results = self._normalize(results)
+                if isinstance(results, singletons):
+                    tracker = False
+                else:
+                    tracker = 0
             # Unknown input value: cry
             else:
                 err = "Not sure how to yield results from a {!r}"
                 raise TypeError(err.format(type(results)))
             # Save results for use by the method
             self._set("__{}".format(method), results)
+            self._set("__{}_tracker".format(method), tracker)
             # Wrap the method in a Mock, if applicable
             if Mock is not None:
                 self._set(method, Mock(wraps=getattr(self, method)))
@@ -587,3 +594,18 @@ class MockContext(Context):
             raise heck
         # OK, we're good to modify, so do so.
         value[command] = self._normalize(result)
+
+    def assert_all_ran(self):
+        """
+        Raises `.CommandsNotRun` if any prepared results were not run.
+
+        For single values (result objects, strings, bools) this is
+        self-evident: either it was returned (at least once, in the case of
+        ``repeat=True``) or it wasn't.
+
+        For iterable values, this logic requires that the iterable was
+        exhausted (or iterated at least once through, when ``repeat=True``).
+
+        .. versionadded:: 1.5
+        """
+        pass

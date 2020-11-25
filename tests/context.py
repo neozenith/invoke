@@ -9,6 +9,7 @@ from pytest import skip, raises, mark
 
 from invoke import (
     AuthFailure,
+    CommandsNotRun,
     Context,
     Config,
     FailingResponder,
@@ -737,3 +738,60 @@ class MockContext_:
             MockContext(**self.kwargs)
             assert preferred.Mock.call_count == 2
             assert other.Mock.call_count == 0
+
+    class assert_all_ran:
+        def null_case(self):
+            MockContext().assert_all_ran()
+
+        @mark.parametrize('repeat', [True, False])
+        def happy_singletons(self, repeat):
+            for value in (
+                "foo",
+                True,
+                {"foo": "bar"},
+                {"foo": True},
+                {re.compile("foo.*"): "bar"},
+            ):
+                for method in ("run", "sudo"):
+                    c = MockContext(repeat=repeat, **{method: value})
+                    c.run("foo")
+                    c.assert_all_ran()
+
+        @mark.parametrize('repeat', [True, False])
+        def happy_iterables(self, repeat):
+            for value in (
+                ["foo", "bar"],
+                {"foo": ["foo", "bar"]},
+            ):
+                for method in ("run", "sudo"):
+                    c = MockContext(repeat=repeat, **{method: value})
+                    c.run("foo")
+                    c.run("foo")
+                    c.assert_all_ran()
+
+        @mark.parametrize('repeat', [True, False])
+        def unhappy_singletons(self, repeat):
+            for value in (
+                "foo",
+                True,
+                {"foo": "bar"},
+                {"foo": True},
+                {re.compile("foo.*"): "bar"},
+            ):
+                for method in ("run", "sudo"):
+                    c = MockContext(repeat=repeat, **{method: value})
+                    with raises(CommandsNotRun):
+                        c.assert_all_ran()
+
+        @mark.parametrize('repeat', [True, False])
+        def unhappy_iterables(self, repeat):
+            for value in (
+                ["foo", "bar"],
+                {"foo": ["foo", "bar"]},
+            ):
+                for method in ("run", "sudo"):
+                    c = MockContext(repeat=repeat, **{method: value})
+                    c.run("foo")
+                    # No second run: leftovers
+                    with raises(CommandsNotRun):
+                        c.assert_all_ran()

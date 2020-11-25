@@ -6,6 +6,7 @@ from .exceptions import (  # noqa
     AmbiguousEnvVar,
     AuthFailure,
     CollectionNotFound,
+    CommandsNotRun,
     Exit,
     ParseError,
     PlatformError,

@@ -412,3 +412,13 @@ class SubprocessPipeError(Exception):
     """
 
     pass
+
+
+class CommandsNotRun(Exception):
+    """
+    Raised by `.MockContext.assert_all_ran` when not all commands were run.
+
+    .. versionadded:: 1.5
+    """
+
+    pass

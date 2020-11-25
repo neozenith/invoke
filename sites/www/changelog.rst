@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :feature:`-` `~invoke.context.MockContext` now offers a `~.MockContext.assert_all_ran` method for ensuring all setup expectations were actually invoked.
 - :feature:`-` `~invoke.context.MockContext` now accepts a few quality-of-life
   shortcuts as keys and values in its ``run``/``sudo`` arguments:
 

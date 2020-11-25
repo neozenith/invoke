@@ -165,6 +165,30 @@ By example, let's modify an earlier example where we cared about stdout::
 As with everything else in this document, this tactic can be applied to
 iterators or mappings as well as individual values.
 
+Making sure expectations were met
+---------------------------------
+
+`.MockContext` offers a useful extra method for ensuring all the expectations
+you set up were actually invoked. If your test case doesn't require more
+specific assertions, this can save a lot of boilerplate (especially versus the
+mock use case from earlier in this document, where you are usually compelled to
+assert certain method calls happened). Meet `.MockContext.assert_all_ran`::
+
+    from invoke import MockContext, Result
+    from mytasks import replace
+
+    def test_regular_sed():
+        c = MockContext(run={
+            "which gsed": False,
+            "sed -e s/foo/bar/g file.txt": True,
+        })
+        replace(c, 'file.txt', 'foo', 'bar')
+        c.assert_all_ran()
+
+Not too different from an earlier example (besides leveraging boolean values)
+but it's tidier: no need for extra variables, and you get the bonus assertion
+that the ``which gsed`` must have been called.
+
 Regular expression command matching
 -----------------------------------
 
