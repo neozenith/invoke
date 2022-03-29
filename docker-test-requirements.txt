@@ -1,0 +1,11 @@
+# Install self before invocations to save a bit of time
+-e .
+# Invocations, for all sorts of things
+#invocations==2.4.0
+# Coverage!
+coverage==4.5.4
+# Testing
+pytest==4.6.3
+pytest-relaxed==1.1.5
+pytest-cov==2.5.1
+mock==1.0.1
