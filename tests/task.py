@@ -3,6 +3,7 @@ from pytest import raises, skip
 
 from invoke import Context, Config, task, Task, Call, Collection
 from invoke import FilesystemLoader as Loader
+from invoke.util import six
 
 from _util import support
 
@@ -160,6 +161,15 @@ class task_:
             pass
 
         assert isinstance(mytask, MyTask)
+
+    def support_type_hinted_methods(self):
+        if six.PY3:
+            th = self._load("type_hinting")
+            args = th["typed_task"].get_arguments()
+            assert len(args) == 1
+            arg = args[0]
+            assert arg.name == "starsign"
+            assert arg.default == "scorpio"
 
     def unknown_kwargs_get_mad_at_Task_level(self):
         # NOTE: this was previously untested behavior. We actually just
