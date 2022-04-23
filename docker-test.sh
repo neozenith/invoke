@@ -12,5 +12,5 @@ python -m pip install -U pip -qq
 echo "Installing deps via -r docker-test-requirements.txt ..."
 python -m pip install -r /opt/var/invoke/docker-test-requirements.txt -qq
 
-pytest --color=yes --capture=no
+pytest --color=yes --capture=no --cov=invoke
 # inv test
