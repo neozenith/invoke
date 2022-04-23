@@ -150,7 +150,13 @@ class Task(object):
         # TODO: __call__ exhibits the 'self' arg; do we manually nix 1st result
         # in argspec, or is there a way to get the "really callable" spec?
         func = body if isinstance(body, types.FunctionType) else body.__call__
-        spec = inspect.getargspec(func)
+        # NOTE: `getfullargspec` supported as drop in replacement for `getargspec` since 3.0
+        # https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
+        # Keeping both versions like this referncing `six` to make it obvious tidy up in Python 2 removal
+        if six.PY3:
+            spec = inspect.getfullargspec(func)
+        else:
+            spec = inspect.getargspec(func)
         arg_names = spec.args[:]
         matched_args = [reversed(x) for x in [spec.args, spec.defaults or []]]
         spec_dict = dict(zip_longest(*matched_args, fillvalue=NO_DEFAULT))
