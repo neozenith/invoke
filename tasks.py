@@ -9,6 +9,52 @@ from invocations.packaging import vendorize, release
 
 
 @task
+def docker_test(c, version=None):
+    """Use docker containers to locally cross check backwards compatability.
+
+    Usage:
+        invoke docker-test
+        invoke docker-test -v 3.4
+        invoke docker-test -v 3.4,3.5
+        invoke docker-test -v 2.7,3.9.10
+
+    Split the version string by ',' to get multiple versions.
+    Split by '.' in all versions to get parts.
+    Can specify only <major>.<minor> and will select the nearest match.
+    Can specify <major>.<minor>.<patch> and will validate whole version in supported list.
+
+    Runs test suite against all targetted versions specified or the default list if left blank.
+    """
+    default_versions = [
+        (2, 7, 18),
+        (3, 4, 10),
+        (3, 5, 10),
+        (3, 6, 15),
+        (3, 7, 13),
+        (3, 8, 12),
+        (3, 9, 10),
+    ]
+    target_versions = [".".join(map(lambda x: str(x), v)) for v in default_versions]
+
+    if version is not None:
+        versions = version.split(",")
+        version_parts = [tuple([int(n) for n in v.split(".")]) for v in versions]
+        valid_versions = [
+            v for v in default_versions if v in version_parts or v[:2] in version_parts
+        ]
+        target_versions = [".".join(map(lambda x: str(x), v)) for v in valid_versions]
+
+    for v in target_versions:
+        c.run(
+            "docker run -it -v $PWD:/opt/var/invoke/ python:{} /opt/var/invoke/docker-test.sh".format(
+                v
+            ),
+            pty=True,
+            echo=True,
+        )
+
+
+@task
 def test(
     c,
     verbose=False,
@@ -59,7 +105,9 @@ def integration(c, opts=None, pty=True):
     # tests honoring config overrides (like the unit-test suite) don't.
     shell = c.config.global_defaults()["run"]["shell"]
     if not c.run("which {}".format(shell), hide=True, warn=True):
-        err = "No {} on this system - cannot run integration tests! Try a container?"  # noqa
+        err = (
+            "No {} on this system - cannot run integration tests! Try a container?"
+        )  # noqa
         raise Exit(err.format(shell))
     opts = opts or ""
     opts += " integration/"
@@ -99,6 +147,7 @@ def regression(c, jobs=8):
 
 ns = Collection(
     test,
+    docker_test,
     coverage,
     integration,
     regression,
